@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.LinearLayout;
 
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
@@ -79,6 +80,9 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     		_jsService = new LDJSService(_webview, this);
     	}
     	_jsService.registerPlugin("device", "com.netease.demoApp.plugins.LDPDevice");
+    	_jsService.registerPlugin("app", "com.netease.demoApp.plugins.LDPAppInfo");
+    	_jsService.registerPlugin("nav", "com.netease.demoApp.plugins.LDPNavCtrl");
+    	_jsService.registerPlugin("ui", "com.netease.demoApp.plugins.LDPUIGlobalCtrl");
     	
     	//加载请求
     	if(this.url != null && !this.url.equalsIgnoreCase("")){
@@ -96,6 +100,7 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     		
     		//设置允许webview和javascript交互
             _webview.getSettings().setJavaScriptEnabled(true);
+            _webview.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
     		
     		//绑定webviewclient
     		_webviewClient = new WebViewClient(){

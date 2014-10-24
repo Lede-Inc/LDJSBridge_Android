@@ -47,15 +47,20 @@ public class LDJSCallbackContext {
     }
     
     private void webViewSendPluginResult(LDJSPluginResult pluginResult, String _callbackId){
-    	//通过回调函数返回
-        String result = pluginResult.getMessage();
-        String jsCall = "";
-        if(Integer.parseInt(_callbackId) > 0){
-        	jsCall = "javascript:mapp.execGlobalCallback("+_callbackId+",'"+result+"')";
-        } else {
-        	jsCall = "javascript:window."+_callbackId+"('"+result+"')";
-        }
-        webView.loadUrl(jsCall);
+    	if(pluginResult.getStatus() == 0 || pluginResult.getStatus() == 1){ 
+        	//通过回调函数返回
+            String result = pluginResult.getMessage();
+            String jsCall = "";
+            if(_callbackId.matches("[\\d]+") && Integer.parseInt(_callbackId) > 0){
+            	jsCall = "javascript:mapp.execGlobalCallback("+_callbackId+",'"+result+"')";
+            } else {
+            	jsCall = "javascript:window."+_callbackId+"('"+result+"')";
+            }
+        	
+            webView.loadUrl(jsCall);
+    	} else {
+    		webView.loadUrl("javascript:alert('"+pluginResult.getMessage()+"')");
+    	}
     }
 
     /**

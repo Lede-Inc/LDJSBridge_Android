@@ -90,7 +90,7 @@ public class LDJSCommandQueue {
         
         //如果url有参数，切割传入的参数
         List<String> arr_params = null; 
-        HashMap<String,String> dic_params = null;
+        HashMap<String,Object> dic_params = null;
         if(arr_qmark.length == 2)
         {
             String str_params = arr_qmark[1];
@@ -116,28 +116,33 @@ public class LDJSCommandQueue {
             	Iterator<String> iterator = arr_params.iterator();
                 while (iterator.hasNext()) {
                 	String tmpParam = iterator.next();
-                	JSONObject tmp_dic = new JSONObject(tmpParam);
-                    if(tmp_dic != null){
-                        if(tmp_dic.length() > 0 && dic_params == null){
-                        	dic_params = new HashMap<String, String>();
-                        }
-                        
-                        
-                        Iterator<?> it = tmp_dic.keys();
-                        //拷贝key和对应的value
-                        while(it.hasNext()){
-                        	String key = (String)it.next();
-                            if(key.toLowerCase().equalsIgnoreCase("callback")){
-                                callIndex = tmp_dic.getString(key);
-                            } else {
-                            	dic_params.put(key, (String)tmp_dic.getString(key));
+                	try{
+                    	JSONObject tmp_dic = new JSONObject(tmpParam);
+                        if(tmp_dic != null){
+                            if(tmp_dic.length() > 0 && dic_params == null){
+                            	dic_params = new HashMap<String,Object>();
                             }
                             
-                        }
-                        
-                        //处理完删除该参数
-                        arr_params.remove(tmpParam);
-                    } 
+                            
+                            Iterator<?> it = tmp_dic.keys();
+                            //拷贝key和对应的value
+                            while(it.hasNext()){
+                            	String key = (String)it.next();
+                                if(key.toLowerCase().equalsIgnoreCase("callback")){
+                                    callIndex = tmp_dic.getString(key).toString();
+                                } else {
+                                	dic_params.put(key, tmp_dic.get(key));
+                                }
+                                
+                            }
+                            
+                            //处理完删除该参数
+                            arr_params.remove(tmpParam);
+                        } 
+                	}catch(Exception e){
+                		Log.d(LOG_TAG, "param is not json object");
+                		//不是json对象
+                	}
                 }
             }
             
@@ -155,7 +160,7 @@ public class LDJSCommandQueue {
     }   
     
     
-    public String jsExec(String service, String action, String callbackId, List<String> arr_params, HashMap<String,String>dic_params) throws JSONException, IllegalAccessException {
+    public String jsExec(String service, String action, String callbackId, List<String> arr_params, HashMap<String,Object>dic_params) throws JSONException, IllegalAccessException {
         // If the arguments weren't received, send a message back to JS.  It will switch bridge modes and try again.  See CB-2666.
         // We send a message meant specifically for this case.  It starts with "@" so no other message can be encoded into the same string.
        if(service == null || service.equalsIgnoreCase("")) {
@@ -196,7 +201,7 @@ public class LDJSCommandQueue {
      * @param rawArgs       An Array literal string containing any arguments needed in the
      *                      plugin execute method.
      */
-    public void pluginExec(final String service, final String action, final String callbackId, final List<String> arr_params, final HashMap<String,String>dic_params) {
+    public void pluginExec(final String service, final String action, final String callbackId, final List<String> arr_params, final HashMap<String,Object>dic_params) {
         LDJSPlugin plugin = _jsService.getCommandInstance(service);
         if (plugin == null) {
             Log.d(LOG_TAG, "exec() call to unknown plugin: " + service);
@@ -207,6 +212,7 @@ public class LDJSCommandQueue {
         try {
             long pluginStartTime = System.currentTimeMillis();
             LDJSParams args = new LDJSParams(arr_params, dic_params);
+            args.printParams();
             boolean wasValidAction = plugin.execute(action, args, callbackContext);
             long duration = System.currentTimeMillis() - pluginStartTime;
 

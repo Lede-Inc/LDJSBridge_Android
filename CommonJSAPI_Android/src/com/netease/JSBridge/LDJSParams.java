@@ -19,21 +19,24 @@
 package com.netease.JSBridge;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+
+import android.util.Log;
 
 public class LDJSParams {
     private List<String>	_arrParams;
-    private HashMap<String, String> _dicParams;
+    private HashMap<String, Object> _dicParams;
 
     public LDJSParams(List<String> arrParams) {
     	this(arrParams, null);
     }
     
-    public LDJSParams(HashMap<String,String> dicParams) {
+    public LDJSParams(HashMap<String,Object> dicParams) {
     	this(null, dicParams);
     }
     
-    public LDJSParams(List<String> arrParams, HashMap<String,String> dicParams) {
+    public LDJSParams(List<String> arrParams, HashMap<String,Object> dicParams) {
     	if(arrParams != null){
     		this._arrParams = arrParams;
     	}
@@ -43,7 +46,23 @@ public class LDJSParams {
     	}
     }
 
-
+    public void printParams(){
+    	if(this._arrParams != null) {
+    		for(int i = 0; i < this._arrParams.size(); i++){
+    			Log.d("LDJSParams", "index:" + i +"\t value:" + this._arrParams.get(i));
+    		}
+    	}
+    	
+    	if(this._dicParams != null){
+    		Iterator<?> iter = this._dicParams.keySet().iterator();  
+    		while (iter.hasNext()) {  
+    		    String key = (String)iter.next();  
+    		    Object val = (Object)this._dicParams.get(key);  
+    		    Log.d("LDJSParams", "key:" + key +"\t value:" + val.toString());
+    		} 
+    	}
+    }
+    
     // Pass through the basics to the base args.
     public String get(int index) {
         return this.get(index,"");
@@ -57,13 +76,13 @@ public class LDJSParams {
     	return param;
     }
     
-    public String jsonParamForkey(String key){
-    	return this.jsonParamForkey(key, "");
+    public Object jsonParamForkey(String key){
+    	return this.jsonParamForkey(key, null);
     }
     
-    public String jsonParamForkey(String key, String defaultValue){
-    	String param = _dicParams.get(key);
-    	if(param == null || param.equalsIgnoreCase("")){
+    public Object jsonParamForkey(String key, Object defaultValue){
+    	Object param = _dicParams.get(key);
+    	if(param == null){
     		param = defaultValue;
     	}
     	return param;

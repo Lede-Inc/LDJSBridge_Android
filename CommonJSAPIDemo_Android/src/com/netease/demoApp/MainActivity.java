@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
     
     public void openWebViewActivity(View view){
     	Intent intent = new Intent(this, LDPBaseWebViewActivity.class);
-    	intent.putExtra(EXTRA_URL, "http://10.232.4.186/jsapi_android/api.htm");
+    	intent.putExtra(EXTRA_URL, "http://10.232.4.186/LDJSBridge_JS/api.htm");
     	startActivity(intent);
     }
 }

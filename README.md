@@ -43,7 +43,7 @@
 ### 定义某个模块插件
 
 >
-在Native部分，定义一个模块插件对应于创建一个插件类, 模块中的每个插件接口对应插件类中某个方法。
+在Native部分，定义一个模块插件对应于创建一个插件类, 模块中的每个插件接口在通过传入的action区别。
 集成LDJSBridge_Android框架之后，只需要继承框架中的插件基类LDJSPlugin，如下所示：
 
 
@@ -110,9 +110,9 @@
 ---------------------------------
 
 >
- 在IOS项目中，当展示WAP页面的时候会用到UIWebView组件，我们通过在UIWebView组件所在的Controller中注册JSAPIServie服务，拦截Webview的URL进行处理。
+ 在Android项目中，当展示WAP页面的时候会用到WebView组件，我们通过在WebView组件所在Activity中注册JSAPIServie服务，通过WebView指定的WebviewClient拦截Webview的URL进行处理。
  
- * 在Webview所在的Controller中初始化一个JSAPIService，并注册该WebView需要使用的插件
+ * 在Webview所在的Activity中初始化一个JSAPIService，并注册该WebView需要使用的插件
  
 		public void initActivity() {
         	//创建webview和显示view
@@ -123,6 +123,7 @@
     		if(_jsService == null){
     			_jsService = new LDJSService(_webview, this);
     		}
+            //“device”是JSAPI中定义的模块名称，"com...LDPDevice"是插件类的具体包和Class名称
     		_jsService.registerPlugin("device", "com.netease.demoApp.plugins.LDPDevice");
     		_jsService.registerPlugin("app", "com.netease.demoApp.plugins.LDPAppInfo");
     		_jsService.registerPlugin("nav", "com.netease.demoApp.plugins.LDPNavCtrl");

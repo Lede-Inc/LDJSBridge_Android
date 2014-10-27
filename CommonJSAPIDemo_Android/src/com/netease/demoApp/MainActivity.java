@@ -1,5 +1,6 @@
 package com.netease.demoApp;
 
+import java.io.IOException;
 import com.netease.commonjsapidemo_android.R;
 
 import android.app.Activity;
@@ -22,7 +23,21 @@ public class MainActivity extends Activity {
     
     public void openWebViewActivity(View view){
     	Intent intent = new Intent(this, LDPBaseWebViewActivity.class);
-    	intent.putExtra(EXTRA_URL, "http://10.232.0.201/LDJSBridge_JS/api.htm");
+    	
+    	String paths[];
+		try {
+			paths = this.getResources().getAssets().list("LDJSBridge_JS");
+	    	if(paths.length == 2 && (paths[0].equalsIgnoreCase("api.htm") || paths[1].equalsIgnoreCase("api.htm"))){
+	    		intent.putExtra(EXTRA_URL, "file:///android_asset/LDJSBridge_JS/api.htm");
+	    	} else {
+	    		intent.putExtra(EXTRA_URL, "http://10.232.0.201/LDJSBridge_JS/api.htm");
+	    	}
+	    	
+		} catch (IOException e) {
+			e.printStackTrace();
+			intent.putExtra(EXTRA_URL, "http://10.232.0.201/LDJSBridge_JS/api.htm");
+		}
+		
     	startActivity(intent);
     }
 }

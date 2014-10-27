@@ -6,6 +6,8 @@ import java.util.HashMap;
 import org.json.JSONException;
 
 import android.annotation.SuppressLint;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -20,6 +22,7 @@ import com.netease.JSBridge.LDJSCommandQueue;
 @SuppressLint("DefaultLocale") 
 public class LDJSService {
 	private static final String LOG_TAG = "LDJSService";
+	private String _userAgent = "";
 	private boolean initialized = false;
 	
     //pluginsMap 用于注册插件， pluginObject用户存储实例化的插件对象
@@ -37,6 +40,26 @@ public class LDJSService {
     	if(_commandQueue == null){
     		_commandQueue = new LDJSCommandQueue(this, this.webView);
     	}
+    	
+    	//设置WebView的UserAgent的值
+    	if(this.webView != null){
+	    	if(_userAgent.equalsIgnoreCase("")){
+	    		_userAgent = this.webView.getSettings().getUserAgentString();
+	    	}
+	        
+	    	// 获取packagemanager的实例, getPackageName()是你当前类的包名，0代表是获取版本信息
+	        PackageManager packageManager = this.activityInterface.getActivity().getPackageManager();
+	        String packageName = this.activityInterface.getActivity().getPackageName();
+	        try{
+	        	PackageInfo packInfo = packageManager.getPackageInfo(packageName,0);
+	        	String version = packInfo.versionName;
+		    	String customUserAgent = _userAgent + " _MAPP_/" + version;
+		    	this.webView.getSettings().setUserAgentString(customUserAgent);
+	        } catch(Exception e){
+	        	Log.e(LOG_TAG, "Cant fand the app Version");
+	        }
+    	}
+    	
     	this.setInitialized(true);
 	}
     

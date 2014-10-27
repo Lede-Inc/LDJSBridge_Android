@@ -188,7 +188,7 @@
 >
 在手机qq里可以看到很多独立的基于WAP页面的功能模块，其实基于JSBridge的JSAPI最大的用处是以这种方式呈现。
 
-* 目前在demo工程中已经初步完成了Device、App、UI导航部分的示例（参看[LDPBaseWebViewActivity.java文件](https://git.ms.netease.com/commonlibrary/LDJSBridge_Android/blob/master/CommonJSAPIDemo_Android/src/com/netease/demoApp/plugins/LDPBaseWebViewActivity.java)），客户端可以在此基础上根据项目需求进行完善开发：
+* 目前在demo工程中已经初步完成了Device、App、UI导航部分的示例（参看[LDPBaseWebViewActivity.java文件](CommonJSAPIDemo_Android/src/com/netease/demoApp/plugins/LDPBaseWebViewActivity.java)），客户端可以在此基础上根据项目需求进行完善开发：
 
 
 >

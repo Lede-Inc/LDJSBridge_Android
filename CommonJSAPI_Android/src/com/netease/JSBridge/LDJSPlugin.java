@@ -45,7 +45,7 @@ public class LDJSPlugin {
      */
     protected void pluginInitialize() {
     }
-    
+
 
     /**
      * Executes the request.
@@ -132,7 +132,7 @@ public class LDJSPlugin {
     public Uri remapUri(Uri uri) {
         return null;
     }
-    
+
     /**
      * Called when the WebView does a top-level navigation or refreshes.
      *

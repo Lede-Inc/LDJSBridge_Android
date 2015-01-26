@@ -1,0 +1,31 @@
+{
+    "update": "http://dynamic.163.com/jsbridge/LDJSBridge.js.txt",
+    "module": "mapp",
+    "plugins": [
+        {
+            "pluginname": "device",
+            "pluginclass": "com.netease.demoApp.plugins.LDPDevice",
+            "exports": [
+                {
+                    "showmethod": "getDeviceInfo",
+                    "realmethod": "getDeviceInfo"
+                }
+            ]
+        },
+        {
+            "pluginname": "app",
+            "pluginclass": "com.netease.demoApp.plugins.LDPAppInfo",
+            "exports": []
+        },
+        {
+            "pluginname": "nav",
+            "pluginclass": "com.netease.demoApp.plugins.LDPUINavCtrl",
+            "exports": []
+        },
+        {
+            "pluginname": "ui",
+            "pluginclass": "com.netease.demoApp.plugins.LDPUIGlobalCtrl",
+            "exports": []
+        }
+    ]
+}

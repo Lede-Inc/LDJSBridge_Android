@@ -2,9 +2,10 @@ package com.netease.JSBridge;
 
 import java.util.concurrent.ExecutorService;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 
-import com.netease.JSBridge.LDJSPlugin; 
+import com.netease.JSBridge.LDJSPlugin;
 
 
 /**
@@ -36,7 +37,14 @@ public interface LDJSActivityInterface {
      * @return the Activity
      */
     public abstract Activity getActivity();
-    
+
+
+    /**
+     * 获取调用Bridge的程序上下文
+     * @return
+     */
+    public abstract Context getContext();
+
 
     /**
      * Called when a message is sent to plugin.
@@ -46,7 +54,7 @@ public interface LDJSActivityInterface {
      * @return              Object or null
      */
     public Object onMessage(String id, Object data);
-    
+
     /**
      * Returns a shared thread pool that can be used for background tasks.
      */

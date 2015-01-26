@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- saved from url=(0047)http://pub.idqqimg.com/qqmobile/qqapi.test.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    
+
     <title>Mobile JS API Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <!-- <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"> -->
@@ -56,7 +56,6 @@
 	<button class="btn btn-primary" onclick="getUICtrl(12)">showTips</button>弹出文本的toast提示，2秒后消失<br/>
 	<button class="btn btn-primary" onclick="getUICtrl(13)">setWebViewBehavior</button>配置webview的行为<br/>
     <button class="btn btn-primary" onclick="getUICtrl(14)">showShareMenu</button>唤起分享面板，就是默认情况下点击 WebView 右上角的按钮时弹出的面板<br/>	<hr>
-	<script src="./jsapi.js"></script>
 <script>
 function mappEnv() {
    alert(JSON.stringify(mapp));
@@ -75,7 +74,7 @@ function getDevice(type){
 				alert(result);
 			});
 			break;
-		case 2: 
+		case 2:
 			mapp.device.getDeviceInfo(function(data){
 				alert("hello:JSCall" + JSON.stringify(data));
 			});
@@ -114,7 +113,7 @@ function getAppInfo(type){
 				alert(data);
 			});
 			break;
-		case 2: 
+		case 2:
 			mapp.app.isAppInstalledBatch(mapp.android ? ['com.netease.lottery','com.netease.film'] : ['mlottery','mfilm'], function(data){
 				alert('mlottery,mfilm is install: ' + JSON.stringify(data));
 			});
@@ -157,10 +156,10 @@ function getUICtrl(type, n){
 				});
 			}
 			break;
-		case 2: 
+		case 2:
 			mapp.ui.openView({
-				name: "about", 
-				options: {"title": "js标题"}, 
+				name: "about",
+				options: {"title": "js标题"},
 				onclose: function(data){ alert(data) }
 			});
 			break;

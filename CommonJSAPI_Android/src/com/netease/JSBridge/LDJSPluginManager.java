@@ -76,6 +76,7 @@ public class LDJSPluginManager {
 
 
 	private String updateUrl = null; //核心框架JS的线上更新地址
+	private String coreBridgeJSFileName = null; //核心框架JS的文件名
 	private boolean isUpdate = false; //是否已经检查和下载远程最新的核心框架JS
 	private LDJSActivityInterface activityInterface = null;
 	private WebView webView = null;
@@ -131,6 +132,15 @@ public class LDJSPluginManager {
            JSONObject dict = new JSONObject(Result);
            if(dict != null && dict.length() > 0){
         	   updateUrl = dict.getString("update");
+        	   //从updateUrl中获取核心文件的名字
+        	   if(updateUrl != null && updateUrl.length() > 0){
+        		   int start= updateUrl.lastIndexOf("/");
+        		   if(start != -1){
+        			   coreBridgeJSFileName = updateUrl.substring(start+1, updateUrl.length());
+        		   }
+        	   }
+        	   if(coreBridgeJSFileName == null) coreBridgeJSFileName = JsBridgeCoreFileName;
+
         	   JSONArray plugins = dict.getJSONArray("plugins");
         	   if(plugins == null || plugins.length() == 0) return;
         	   for(int i = 0; i < plugins.length(); i++){
@@ -243,9 +253,11 @@ public class LDJSPluginManager {
 		if(!this.isUpdate && this.updateUrl != null){
 			String onlineJsCode = this.getContentFromUrl(this.updateUrl);
 			String localJsCode = localCoreBridgeJSCode();
-	        if(onlineJsCode.length() != localJsCode.length() || !onlineJsCode.equals(localJsCode)){
+	        if( (onlineJsCode != null && onlineJsCode.length() > 0) &&
+	        	(localJsCode != null && localJsCode.length() > 0) &&
+	        		(onlineJsCode.length() != localJsCode.length() || !onlineJsCode.equals(localJsCode))){
 	        	//重写asset的核心JS文件
-	        	writeTxtFile(onlineJsCode, bridgeCacheDir() + "/" + JsBridgeCoreFileName);
+	        	writeTxtFile(onlineJsCode, bridgeCacheDir() + "/" + coreBridgeJSFileName);
 	        }
 
 	        this.isUpdate = true;
@@ -302,11 +314,11 @@ public class LDJSPluginManager {
 	 * @return
 	 */
 	public String localCoreBridgeJSCode(){
-		File cacheBridgeFile = new File(bridgeCacheDir(), JsBridgeCoreFileName);
+		File cacheBridgeFile = new File(bridgeCacheDir(), coreBridgeJSFileName);
 		if(!cacheBridgeFile.exists()){
 			try {
 				InputStream is;
-				is = context.getAssets().open(JsBridgeCoreFileName);
+				is = context.getAssets().open(coreBridgeJSFileName);
 	            FileOutputStream fos = new FileOutputStream(new File(cacheBridgeFile.getPath()));
 	            byte[] buffer = new byte[2048];
 	            int byteCount=0;
@@ -324,7 +336,7 @@ public class LDJSPluginManager {
 		}
 
 
-	    String jsBrideCodeStr = readTxtFile(bridgeCacheDir() + "/" + JsBridgeCoreFileName);
+	    String jsBrideCodeStr = readTxtFile(bridgeCacheDir() + "/" + coreBridgeJSFileName);
 	    return jsBrideCodeStr;
 	}
 

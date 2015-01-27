@@ -1,14 +1,9 @@
 package com.netease.demoApp.plugins;
 
-import java.io.UnsupportedEncodingException;
-import java.util.concurrent.ExecutorService;
-import org.json.JSONException;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Display;
@@ -23,7 +18,6 @@ import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebViewClient;
 
-import com.netease.JSBridge.LDJSPlugin;
 import com.netease.JSBridge.LDJSService;
 import com.netease.JSBridge.LDJSActivityInterface;
 import com.netease.JSBridge.LDJSLOG;
@@ -41,7 +35,7 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
 
     //the showURL of WebView
     public String url;
-    protected LDJSService _jsService;
+    protected LDJSService jsBridgeService;
 
     // The webview for theActivity
     protected LinearLayout root;
@@ -78,13 +72,9 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     	createViews();
 
     	//注册插件服务
-    	if(_jsService == null){
-    		_jsService = new LDJSService(_webview, this, "PluginConfig.json");
+    	if(jsBridgeService == null){
+    		jsBridgeService = new LDJSService(_webview, this, "PluginConfig.json");
     	}
-    	//_jsService.registerPlugin("device", "com.netease.demoApp.plugins.LDPDevice");
-    	//_jsService.registerPlugin("app", "com.netease.demoApp.plugins.LDPAppInfo");
-    	//_jsService.registerPlugin("nav", "com.netease.demoApp.plugins.LDPNavCtrl");
-    	//_jsService.registerPlugin("ui", "com.netease.demoApp.plugins.LDPUIGlobalCtrl");
 
     	//加载请求
     	if(this.url != null && !this.url.equalsIgnoreCase("")){
@@ -108,28 +98,23 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     		_webviewClient = new WebViewClient(){
  		        @Override
  		        public void onPageFinished(WebView view, String url) {
- 		        	_jsService.onWebPageFinished();
- 		        	//_webview.loadUrl("javascript:alert(JSON.stringify(mapp));");
+ 		        	//在page加载完成之后，加载核心JS
+ 		        	jsBridgeService.onWebPageFinished();
  		        }
 
     			  @Override
     			  public boolean shouldOverrideUrlLoading(WebView view, String url) {
-    					if(url.startsWith("ldjsbridge://")){
-    						try {
-								_jsService.handleURLFromWebview(url);
-							} catch (UnsupportedEncodingException e) {
-								e.printStackTrace();
-							} catch (JSONException e) {
-								e.printStackTrace();
-							}
+    					if(url.startsWith(LDJSService.LDJSBridgeScheme)){
+    						//处理JSBridge特定的Scheme
+							jsBridgeService.handleURLFromWebview(url);
     						return true;
     					}
 
     					return false;
     			  }
     		};
-    		_webview.setWebViewClient(_webviewClient);
 
+    		_webview.setWebViewClient(_webviewClient);
     		//绑定chromeClient
     		_webviewChromeClient = new WebChromeClient(){
     			@Override
@@ -202,29 +187,6 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     public Activity getActivity() {
         return this;
     }
-
-    @Override
-    public ExecutorService getThreadPool() {
-        return null;
-    }
-
-
-	@Override
-	public void startActivityForResult(LDJSPlugin command, Intent intent,
-			int requestCode) {
-	}
-
-
-	@Override
-	public void setActivityResultCallback(LDJSPlugin plugin) {
-	}
-
-
-	@Override
-	public Object onMessage(String id, Object data) {
-		return null;
-	}
-
 
 
 	@Override

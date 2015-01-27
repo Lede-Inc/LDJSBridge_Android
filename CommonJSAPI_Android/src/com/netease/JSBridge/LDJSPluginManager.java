@@ -1,24 +1,18 @@
 package com.netease.JSBridge;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import android.content.Context;
@@ -28,25 +22,28 @@ import android.webkit.WebView;
 import com.netease.JSBridge.LDJSPlugin;
 
 /***
- * 本地插件管理器
+ * 本地插件管理器, 通过配置文件注册本地插件
+ * 配置文件放置到主工程环境的assets目录位置，在初始化BridgeService时指定配置文件位置
+ * 核心JS文件也放在主工程环境的assets目录，当webview加载完毕之后，会首先加载执行核心JS文件
  * @author panghui
  *
  */
 public class LDJSPluginManager {
-	private static final String TAG = "LDJSPluginManager" ;
-	public static final String JsBridgeCoreFileName = "LDJSBridge.js";
+	private static final String LOG_TAG = "LDJSPluginManager" ;
+	public static final String JsBridgeCoreFileName = "LDJSBridge.js.txt"; //根据文件在asset的位置自行配置，默认放在asset的根目录
+
 	/***
 	 * 记录某个插件对应的接口信息，提供对外开放给API的调用action名和native实际action的对应
 	 * @author panghui
 	 *
 	 */
 	public class LDJSExportDetail {
-		public String showAction; //JSAPI调用的action方法
-		public String realAction; //插件本地的action真实名字
+		public String showMethod; //JSAPI调用的action方法
+		public String realMethod; //插件本地的action真实名字
 
-		public LDJSExportDetail(String theShowAction, String theRealAction){
-			this.showAction = theShowAction;
-			this.realAction = theRealAction;
+		public LDJSExportDetail(String theShowMethod, String theRealMethod){
+			this.showMethod = theShowMethod;
+			this.realMethod = theRealMethod;
 		}
 	}
 
@@ -57,46 +54,62 @@ public class LDJSPluginManager {
 	 *
 	 */
 	public class LDJSPluginInfo {
-		public String pluginName;
-		public String pluginClass;
-		public HashMap<String, LDJSExportDetail> exports = new HashMap<String, LDJSExportDetail>();
-		public LDJSPlugin instance;
+		public String pluginName; //插件名
+		public String pluginClass; //插件对应的实现class
+		public HashMap<String, LDJSExportDetail> exports = new HashMap<String, LDJSExportDetail>(); //插件对外开放的接口配置
+		public LDJSPlugin instance; //插件实例
 
 		public LDJSPluginInfo(){
 			this.instance = null;
 		}
 
 		/***
-		 * 返回showAction对应api接口的详细信息
-		 * @param showAction
+		 * 返回showMethod对应api接口的详细信息
+		 * @param showMethod
 		 * @return
 		 */
-		public LDJSExportDetail getDetailByShowAction(String showAction){
-			return exports.get(showAction);
+		public LDJSExportDetail getDetailByShowMethod(String showMethod){
+			return exports.get(showMethod);
 		}
 	}
 
 
 
-	private String updateUrl = null; //核心框架JS的下载地址
-	private boolean isUpdate = false; //是否检查和下载远程最新的核心框架JS
+	private String updateUrl = null; //核心框架JS的线上更新地址
+	private boolean isUpdate = false; //是否已经检查和下载远程最新的核心框架JS
 	private LDJSActivityInterface activityInterface = null;
 	private WebView webView = null;
-	private Context context;
+	private Context context = null;
 	private HashMap<String, LDJSPluginInfo> pluginMap = new HashMap<String,LDJSPluginInfo>();
 
+	/**
+	 * 初始化插件管理器，必须赋予插件配置文件(放置于Assets目录)，当前执行环境，当前webview，当前webview绑定的activity
+	 * @param configFile
+	 * @param theContext
+	 * @param theActivityInterface
+	 * @param theWebView
+	 */
 	public LDJSPluginManager(String configFile,Context theContext, LDJSActivityInterface theActivityInterface, WebView theWebView){
 		context = theContext;
 		activityInterface = theActivityInterface;
 		webView = theWebView;
 
 		try {
-			this.resetWithConfigFile(configFile);
+			//根据插件配置文件初始化插件
+			resetWithConfigFile(configFile);
+
+			//设置插件完成之后，开启线程检查线上是否有更新
+			new Thread(new Runnable() {
+				public void run() {
+					updateCodeBridgeJSCode();
+				}
+			}).start();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
+
 
 	/**
 	 * 根据本地的插件配置信息，初始化插件管理器
@@ -106,6 +119,7 @@ public class LDJSPluginManager {
 	private void resetWithConfigFile(String file) throws IOException{
 		pluginMap.clear();
 		try {
+			//读取配置文件
            InputStreamReader inputReader = new InputStreamReader(context.getAssets().open(file) );
            BufferedReader bufReader = new BufferedReader(inputReader);
            String line="";
@@ -113,9 +127,10 @@ public class LDJSPluginManager {
            while((line = bufReader.readLine()) != null)
                Result += line;
 
+           //解析配置文件
            JSONObject dict = new JSONObject(Result);
            if(dict != null && dict.length() > 0){
-        	   this.updateUrl = dict.getString("update");
+        	   updateUrl = dict.getString("update");
         	   JSONArray plugins = dict.getJSONArray("plugins");
         	   if(plugins == null || plugins.length() == 0) return;
         	   for(int i = 0; i < plugins.length(); i++){
@@ -138,7 +153,7 @@ public class LDJSPluginManager {
         			   }
         		   }
 
-
+        		   //初始化插件实例
         		   LDJSPlugin pluginInstance = instantiatePlugin(info.pluginClass);
         		   if(pluginInstance != null && webView != null && activityInterface != null){
         			   pluginInstance.privateInitialize(activityInterface, webView);
@@ -196,26 +211,26 @@ public class LDJSPluginManager {
 
 
 	/**
-	 * 根据showAction获取插件的实际执行Action名字
-	 * @param showAction
+	 * 根据showMethod获取插件的实际接口名字
+	 * @param showMethod
 	 * @return
 	 */
-	public String realForShowAction(String showAction){
-		String realAction = null;
+	public String realForShowMethod(String showMethod){
+		String realMethod = null;
 	     Iterator<String> ite = pluginMap.keySet().iterator();
 	     while (ite.hasNext()) {
 	    	 LDJSPluginInfo tmp = pluginMap.get(ite.next());
-	    	 if(tmp.getDetailByShowAction(showAction) != null){
-	    		 realAction = tmp.getDetailByShowAction(showAction).realAction;
+	    	 if(tmp.getDetailByShowMethod(showMethod) != null){
+	    		 realMethod = tmp.getDetailByShowMethod(showMethod).realMethod;
 	    		 break;
 	    	 }
 	      }
 
-	     if(realAction == null){
-	    	 realAction = showAction;
+	     if(realMethod == null){
+	    	 realMethod = showMethod;
 	     }
 
-	     return realAction;
+	     return realMethod;
 	}
 
 
@@ -224,29 +239,16 @@ public class LDJSPluginManager {
 	 * 每次初始化bridgeService时，检查线上文件是否有更新，如果更新，下载并替换文件
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unused")
 	private void updateCodeBridgeJSCode(){
 		if(!this.isUpdate && this.updateUrl != null){
 			String onlineJsCode = this.getContentFromUrl(this.updateUrl);
-			  InputStreamReader inputReader;
-			try {
-				inputReader = new InputStreamReader(context.getAssets().open("LDJSBridge.js.text") );
-		           BufferedReader bufReader = new BufferedReader(inputReader);
-		           String line="";
-		           String localJsCode="";
-		           while((line = bufReader.readLine()) != null)
-		        	   localJsCode += line;
+			String localJsCode = localCoreBridgeJSCode();
+	        if(onlineJsCode.length() != localJsCode.length() || !onlineJsCode.equals(localJsCode)){
+	        	//重写asset的核心JS文件
+	        	writeTxtFile(onlineJsCode, bridgeCacheDir() + "/" + JsBridgeCoreFileName);
+	        }
 
-		           if(onlineJsCode.length() != localJsCode.length() || onlineJsCode.equals(localJsCode)){
-		        	   //重写asset的核心JS文件
-		        	   writeTxtFile(onlineJsCode, this.bridgeCacheDir()+JsBridgeCoreFileName+".text");
-		           }
-
-		           this.isUpdate = true;
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+	        this.isUpdate = true;
 		}
 	}
 
@@ -261,14 +263,21 @@ public class LDJSPluginManager {
 		String result = "";
 
 		try{
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpPost httppost = new HttpPost(url);
-			HttpResponse response = httpClient.execute(httppost);
-			HttpEntity entity = response.getEntity();
-			is = entity.getContent();
+			URLConnection conn = null;
+	        URL theURL = new URL(url);
+	        conn = theURL.openConnection();
+	        HttpURLConnection httpConn = (HttpURLConnection) conn;
+	        httpConn.setRequestMethod("GET");
+	        httpConn.connect();
+	        if (httpConn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+	            is = httpConn.getInputStream();
+	        }
+
 		}catch(Exception e){
 			return "";
 		}
+
+		if(is == null) return "";
 
 		try{
 			BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
@@ -293,17 +302,15 @@ public class LDJSPluginManager {
 	 * @return
 	 */
 	public String localCoreBridgeJSCode(){
-		File cacheBridgeFile = new File(this.bridgeCacheDir(), JsBridgeCoreFileName+".text");
+		File cacheBridgeFile = new File(bridgeCacheDir(), JsBridgeCoreFileName);
 		if(!cacheBridgeFile.exists()){
-			//bundleBridgeFile = new
-            InputStream is;
 			try {
-				is = context.getAssets().open(JsBridgeCoreFileName+".text");
+				InputStream is;
+				is = context.getAssets().open(JsBridgeCoreFileName);
 	            FileOutputStream fos = new FileOutputStream(new File(cacheBridgeFile.getPath()));
 	            byte[] buffer = new byte[2048];
 	            int byteCount=0;
 	            while((byteCount=is.read(buffer))!=-1) {//循环从输入流读取 buffer字节
-	            	System.out.print(buffer.toString());
 	                fos.write(buffer, 0, byteCount);//将读取的输入流写入到输出流
 	            }
 	            fos.flush();//刷新缓冲区
@@ -317,7 +324,7 @@ public class LDJSPluginManager {
 		}
 
 
-	    String jsBrideCodeStr = readTxtFile(this.bridgeCacheDir()+"/" + JsBridgeCoreFileName+ ".text");
+	    String jsBrideCodeStr = readTxtFile(bridgeCacheDir() + "/" + JsBridgeCoreFileName);
 	    return jsBrideCodeStr;
 	}
 
@@ -328,7 +335,7 @@ public class LDJSPluginManager {
 	 */
 	private String bridgeCacheDir(){
 		File theBridgeCacheDir = new File(context.getExternalCacheDir().getPath(), "_ldbridge_Cache_");
-		Log.i(TAG, "theBridgeCacheDir>>>>>"+ theBridgeCacheDir.getPath());
+		Log.i(LOG_TAG, "theBridgeCacheDir>>>>>"+ theBridgeCacheDir.getPath());
 		if(!theBridgeCacheDir.exists()){
 			if(!theBridgeCacheDir.mkdir()){
 				return "";
@@ -336,72 +343,6 @@ public class LDJSPluginManager {
 		}
 
 		return theBridgeCacheDir.getPath();
-	}
-
-
-	/**
-	 * 拷贝文件到输出文件
-	 * @param inputFile
-	 * @param outputFile
-	 * @return
-	 */
-	  private static boolean copy(File inputFile, File outputFile) {
-
-		    if (!inputFile.exists()) {
-		      return false;
-		    }
-		    if (!outputFile.exists()) {
-
-		      try {
-		        outputFile.createNewFile();
-		      } catch (IOException e) {
-		        // TODO Auto-generated catch block
-		        e.printStackTrace();
-		        return false;
-		      }
-		    }
-		    FileInputStream fin;
-		    try {
-		      fin = new FileInputStream(inputFile);
-		      copy(fin, outputFile);
-		    } catch (FileNotFoundException e) {
-		      // TODO Auto-generated catch block
-		      e.printStackTrace();
-		      return false;
-		    } catch (IOException e) {
-		      // TODO Auto-generated catch block
-		      e.printStackTrace();
-		      return false;
-		    }
-
-		    return true;
-	}
-
-
-	  /**
-	   * 从一个读入流拷贝到输出文件
-	   * @param is
-	   * @param outputFile
-	   * @throws IOException
-	   */
-	  private static void copy(InputStream is, File outputFile) throws IOException {
-		    OutputStream os = null;
-
-		    try {
-		      os = new BufferedOutputStream(new FileOutputStream(outputFile));
-		      byte[] b = new byte[4096];
-		      int len = 0;
-		      while ((len = is.read(b)) != -1) {
-		        os.write(b, 0, len);
-		      }
-		    } finally {
-		      if (is != null) {
-		        is.close();
-		      }
-		      if (os != null) {
-		        os.close();
-		      }
-		    }
 	}
 
 
@@ -450,6 +391,7 @@ public class LDJSPluginManager {
 	    }
 
 
+
 	    /**
 	     * 将字符串内容写入指定路径的文件
 	     * @param strContent
@@ -458,17 +400,18 @@ public class LDJSPluginManager {
 	    private static void writeTxtFile(String strContent,String strFilePath){
 	      try {
 	           File file = new File(strFilePath);
-	           if (!file.exists()) {
-	            Log.d("TestFile", "Create the file:" + strFilePath);
-	            file.createNewFile();
+	           if (file.exists()) {
+	        	  file.delete();
 	           }
+
+	           file.createNewFile();
 	           RandomAccessFile raf = new RandomAccessFile(file, "rw");
 	           raf.seek(file.length());
 	           raf.write(strContent.getBytes());
 	           raf.close();
 	      } catch (Exception e) {
 	           Log.e("TestFile", "Error on write File.");
-	          }
+	      }
 	    }
 
 

@@ -44,10 +44,8 @@ public class LDJSCommandQueue {
     /**
      * 从webView截取URL并执行
      * @param urlstr
-     * @throws JSONException
-     * @throws UnsupportedEncodingException
      */
-    public void excuteCommandsFromUrl(String urlstr) throws JSONException, UnsupportedEncodingException {
+    public void excuteCommandsFromUrl(String urlstr) {
     	URI uri = URI.create(urlstr);
     	String host = uri.getHost();
     	String pathStr = uri.getPath();
@@ -64,14 +62,24 @@ public class LDJSCommandQueue {
     	//获取调用插件名
     	String pluginName = "";
     	if(host != null && host.length() > 0){
-    		pluginName = java.net.URLDecoder.decode(host, "UTF-8");
+    		try {
+				pluginName = java.net.URLDecoder.decode(host, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     	}
 
     	String methodShowName = "";
     	if(pathStr != null && !pathStr.equalsIgnoreCase("")){
     		String[] paths = pathStr.split("/");
     		if(paths != null && paths.length >= 2){
-    			methodShowName = java.net.URLDecoder.decode(paths[1], "UTF-8");
+    			try {
+					methodShowName = java.net.URLDecoder.decode(paths[1], "UTF-8");
+				} catch (UnsupportedEncodingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
     		}
     	}
 
@@ -87,8 +95,14 @@ public class LDJSCommandQueue {
                     //分割p参数,每一个参数都进行了urlDecode
                     String arr_qualMark[] = str_param.split("=");
                     if(arr_qualMark.length == 2){
-                        String value_param = java.net.URLDecoder.decode(arr_qualMark[1], "UTF-8");
-                        arr_params.add(value_param);
+                        String value_param;
+						try {
+							value_param = java.net.URLDecoder.decode(arr_qualMark[1], "UTF-8");
+							arr_params.add(value_param);
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
                     }//if not equal 2 is not valid
                 }//for
             }
@@ -131,12 +145,19 @@ public class LDJSCommandQueue {
 
 
         //用参数直接开始执行
-        try {
-        	String result = executePending(pluginName, methodShowName, callIndex, arr_params, dic_params);
-        	if(result != null){
-        		Log.i(LOG_TAG, "the plugin" +pluginName +" execute result: " + result);
-        	}
-		} catch (IllegalAccessException e) {
+    	String result;
+		try {
+			try {
+				result = executePending(pluginName, methodShowName, callIndex, arr_params, dic_params);
+	        	if(result != null){
+	        		Log.i(LOG_TAG, "the plugin" +pluginName +" execute result: " + result);
+	        	}
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
@@ -163,13 +184,14 @@ public class LDJSCommandQueue {
        }
 
         try {
-            // Tell the resourceApi what thread the JS is running on.
+            //通过Service从插件管理器获取插件实例
         	LDJSPlugin plugin = _jsService.getPluginInstance(pluginName);
             if (plugin == null) {
                 Log.d(LOG_TAG, "exec() call to unknown plugin: " + pluginName);
                 return "@pluginName unknown";
             }
 
+            //初始化Js执行完成的回调上下文
             LDJSCallbackContext callbackContext = new LDJSCallbackContext(callbackId, _webView);
             try {
                 long pluginStartTime = System.currentTimeMillis();
@@ -195,6 +217,7 @@ public class LDJSCommandQueue {
                 callbackContext.error(e.getMessage());
             }
 
+            //如果ret为Null，执行完成，但不一定成功
             String ret = null;
             return ret;
         } catch (Throwable e) {

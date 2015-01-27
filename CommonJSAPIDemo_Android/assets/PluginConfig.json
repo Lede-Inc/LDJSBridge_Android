@@ -19,7 +19,7 @@
         },
         {
             "pluginname": "nav",
-            "pluginclass": "com.netease.demoApp.plugins.LDPUINavCtrl",
+            "pluginclass": "com.netease.demoApp.plugins.LDPNavCtrl",
             "exports": []
         },
         {

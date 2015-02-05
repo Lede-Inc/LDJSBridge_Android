@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Display;
@@ -97,8 +98,8 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     		//绑定webviewclient
     		_webviewClient = new WebViewClient(){
  		        @Override
- 		        public void onPageFinished(WebView view, String url) {
- 		        	//在page加载完成之后，加载核心JS
+ 		        public void onPageStarted(WebView view, String url, Bitmap favicon){
+ 		        	//在page加载之前，加载核心JS，前端页面可以在document.ready函数中直接调用了；
  		        	jsBridgeService.onWebPageFinished();
  		        }
 

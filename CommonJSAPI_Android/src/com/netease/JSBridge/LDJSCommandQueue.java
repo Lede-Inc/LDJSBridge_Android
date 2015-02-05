@@ -49,7 +49,7 @@ public class LDJSCommandQueue {
     	URI uri = URI.create(urlstr);
     	String host = uri.getHost();
     	String pathStr = uri.getPath();
-    	String query = uri.getQuery();
+    	String query = uri.getRawQuery();
     	String fragement = uri.getFragment();
 
     	//获取URL回调函数的index

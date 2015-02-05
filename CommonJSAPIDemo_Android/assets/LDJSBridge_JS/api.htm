@@ -98,7 +98,7 @@ function getDevice(type){
 			alert("暂不支持");
 			break;
 		case 7:
-			mapp.device.setScreenStatus({ status: prompt("status: ") || 0}, function(data){
+			mapp.device.setScreenStatus({ status: prompt("status: ") || 0, hello:"p=11&c=2"},  function(data){
 				alert(typeof data + ': ' + JSON.stringify(data));
 			});
 			break;

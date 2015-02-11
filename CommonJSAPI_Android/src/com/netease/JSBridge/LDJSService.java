@@ -26,7 +26,6 @@ public class LDJSService {
 
 	private static final String LOG_TAG = "LDJSService";
 	private String _userAgent = ""; //给webview添加UserAgent信息，用于js进行平台和版本判断
-	private boolean loadCodeBridgeJS = false; //是否第一次加载完成
 	private boolean initialized = false;
 
     //pluginsMap 用于注册插件， pluginObject用户存储实例化的插件对象
@@ -78,26 +77,34 @@ public class LDJSService {
 
 
     /**
-     * 在webviewFinished之后加载核心框架JS
+     * 在webviewOnStart时加载核心框架JS
      * 注意：在anroid平台通过loadUrl执行JS，js字符串种不能有注释，js代码中如果有"//"，写成 '/'+'/',不然去注释过程有问题
      * 自执行的JS代码，一般将器封装到一个function中，然后再调用这个封装function
      */
     public void onWebPageFinished(){
-    	if(!loadCodeBridgeJS){
-			String coreBridgeJsCodeStr = pluginManager.localCoreBridgeJSCode();
-			if(webView != null){
-				// 多行注释
-		        String multiComment = "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/";
-		        // 单行注释
-		        String singleComment = "//[^\r\n]*+";
-				Pattern p = Pattern.compile(multiComment + "|" + singleComment + "|" + "\t|\r|\n");
-	            Matcher m = p.matcher(coreBridgeJsCodeStr);
-	            coreBridgeJsCodeStr = m.replaceAll("");
-				coreBridgeJsCodeStr = "javascript:function onCoreBridgeJS(){"+ coreBridgeJsCodeStr.toString() +"}; onCoreBridgeJS();";
-				webView.loadUrl(coreBridgeJsCodeStr);
-				loadCodeBridgeJS = true;
-			}
+		String coreBridgeJsCodeStr = pluginManager.localCoreBridgeJSCode();
+		if(webView != null){
+			// 多行注释
+	        String multiComment = "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/";
+	        // 单行注释
+	        String singleComment = "//[^\r\n]*+";
+			Pattern p = Pattern.compile(multiComment + "|" + singleComment + "|" + "\t|\r|\n");
+            Matcher m = p.matcher(coreBridgeJsCodeStr);
+            coreBridgeJsCodeStr = m.replaceAll("");
+			coreBridgeJsCodeStr = "javascript:function onCoreBridgeJS(){"+ coreBridgeJsCodeStr.toString() +"}; onCoreBridgeJS();";
+			webView.loadUrl(coreBridgeJsCodeStr);
+			Log.i(LOG_TAG, ">>>>>>load js finished>>>>>>");
 		}
+    }
+
+
+    /**
+     * 通过回调通知前端页面本地BridgeService已经初始化完毕
+     * @param eventName
+     */
+    public void readyWithEventName(String eventName){
+    	String eventJS = "javascript:mapp.disPatchEvent('"+ eventName+"');";
+    	webView.loadUrl(eventJS);
     }
 
 

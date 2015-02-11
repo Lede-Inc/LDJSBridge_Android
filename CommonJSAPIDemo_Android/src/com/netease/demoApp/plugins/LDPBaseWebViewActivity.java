@@ -7,7 +7,11 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -46,7 +50,6 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     //用于Webview loadUrl执行JavaScript
     protected WebChromeClient _webviewChromeClient;
 
-
     /**
      * Called when the activity is first created.
      */
@@ -58,8 +61,47 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
       //从Intent中取得messge
         Intent intent = getIntent();
         this.url = intent.getStringExtra(MainActivity.EXTRA_URL);
-
+//        setContentView(R.layout.activity_menu_by_coding);
         initActivity();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        /*
+         * add()方法的四个参数，依次是： 1、组别，如果不分组的话就写Menu.NONE,
+         * 2、Id，这个很重要，Android根据这个Id来确定不同的菜单 3、顺序，那个菜单现在在前面由这个参数的大小决定
+         * 4、文本，菜单的显示文本
+         */
+        menu.addSubMenu(0, Menu.FIRST, 0, "refresh");
+        menu.addSubMenu(0, Menu.FIRST + 1, 0, "forward");
+        menu.addSubMenu(0, Menu.FIRST + 2, 0, "goback");
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        // Handle item selection
+    	Log.i("onOptionItemSelected", ">>>>>"+ item.getItemId()+">>>>");
+        switch (item.getItemId())
+        {
+            case 1:
+            	_webview.reload();
+                return true;
+            case 2:
+            	if(_webview.canGoForward()){
+            		_webview.goForward();
+            	}
+            	return true;
+            case 3:
+            	if(_webview.canGoBack()){
+            		_webview.goBack();
+            	}
+            	return true;
+            default:
+                return true;
+        }
     }
 
 
@@ -90,17 +132,17 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     public void createGapView(){
     	if(_webview == null){
     		_webview = new WebView(LDPBaseWebViewActivity.this, null);
-
     		//设置允许webview和javascript交互
             _webview.getSettings().setJavaScriptEnabled(true);
             _webview.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
 
     		//绑定webviewclient
     		_webviewClient = new WebViewClient(){
- 		        @Override
- 		        public void onPageStarted(WebView view, String url, Bitmap favicon){
- 		        	//在page加载之前，加载核心JS，前端页面可以在document.ready函数中直接调用了；
+ 		        public void onPageFinished(WebView view, String url) {
+ 		        	//在page加载之后，加载核心JS，前端页面可以在document.ready函数中直接调用了；
  		        	jsBridgeService.onWebPageFinished();
+ 		        	//发送事件通知前端
+ 		        	jsBridgeService.readyWithEventName("LDJSBridgeServiceReady");
  		        }
 
     			  @Override

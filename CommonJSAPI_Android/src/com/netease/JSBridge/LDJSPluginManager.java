@@ -315,7 +315,8 @@ public class LDJSPluginManager {
 	 */
 	public String localCoreBridgeJSCode(){
 		File cacheBridgeFile = new File(bridgeCacheDir(), coreBridgeJSFileName);
-		if(!cacheBridgeFile.exists()){
+		if(true){
+//		if(!cacheBridgeFile.exists()){
 			try {
 				InputStream is;
 				is = context.getAssets().open(coreBridgeJSFileName);

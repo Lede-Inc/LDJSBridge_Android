@@ -82,8 +82,8 @@ public class LDJSService {
      * 自执行的JS代码，一般将器封装到一个function中，然后再调用这个封装function
      */
     public void onWebPageFinished(){
-		String coreBridgeJsCodeStr = pluginManager.localCoreBridgeJSCode();
 		if(webView != null){
+			String coreBridgeJsCodeStr = pluginManager.localCoreBridgeJSCode();
 			// 多行注释
 	        String multiComment = "/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/";
 	        // 单行注释

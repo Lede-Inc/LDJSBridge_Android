@@ -5,9 +5,9 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="14"
+        android:minSdkVersion="7"
         android:targetSdkVersion="21" />
-    
+
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -24,14 +24,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity 
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale" 
-            android:label="CommonJSAPI_Android" 
-            android:name="com.netease.demoApp.plugins.LDPBaseWebViewActivity" 
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale"
+            android:label="CommonJSAPI_Android"
+            android:name="com.netease.demoApp.plugins.LDPBaseWebViewActivity"
             android:windowSoftInputMode="adjustResize">
             <meta-data
-                android:name="android.support.PARENT_ACTIVITY"  
-            	android:value="com.netease.demoApp.MainActivity" />  
+                android:name="android.support.PARENT_ACTIVITY"
+            	android:value="com.netease.demoApp.MainActivity" />
         </activity>
     </application>
 

@@ -58,12 +58,16 @@
     <button class="btn btn-primary" onclick="getUICtrl(14)">showShareMenu</button>唤起分享面板，就是默认情况下点击 WebView 右上角的按钮时弹出的面板<br/>	<hr>
     <script src="./zepto.js"></script>
 <script>
-
 document.addEventListener("LDJSBridgeServiceReady", function(){
+	console.log("eventlistender");
       mapp.device.getDeviceInfo(function(data){
 				alert("hello:JSCall" + JSON.stringify(data));
 			});
 }, false);
+
+$(document).ready(function() {
+	console.log("document.ready");
+});
 
 function mappEnv() {
    alert(JSON.stringify(mapp));

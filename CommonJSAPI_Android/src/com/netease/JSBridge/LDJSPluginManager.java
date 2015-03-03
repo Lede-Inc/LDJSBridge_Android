@@ -102,7 +102,7 @@ public class LDJSPluginManager {
 			//设置插件完成之后，开启线程检查线上是否有更新
 			new Thread(new Runnable() {
 				public void run() {
-					updateCodeBridgeJSCode();
+					//updateCodeBridgeJSCode();
 				}
 			}).start();
 		} catch (IOException e) {
@@ -347,7 +347,7 @@ public class LDJSPluginManager {
 	 * @return
 	 */
 	private String bridgeCacheDir(){
-		File theBridgeCacheDir = new File(context.getExternalCacheDir().getPath(), "_ldbridge_Cache_");
+		File theBridgeCacheDir = new File(context.getCacheDir().getPath(), "_ldbridge_Cache_");
 		Log.i(LOG_TAG, "theBridgeCacheDir>>>>>"+ theBridgeCacheDir.getPath());
 		if(!theBridgeCacheDir.exists()){
 			if(!theBridgeCacheDir.mkdir()){

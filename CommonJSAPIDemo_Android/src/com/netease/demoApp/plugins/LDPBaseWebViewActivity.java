@@ -11,7 +11,6 @@ import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -37,6 +36,7 @@ import com.netease.demoApp.MainActivity;
  */
 public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInterface {
     public static String TAG = "LDPBaseWebViewActivity";
+    private boolean isWebviewStarted = false;
 
     //the showURL of WebView
     public String url;
@@ -138,15 +138,27 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
 
     		//绑定webviewclient
     		_webviewClient = new WebViewClient(){
- 		        public void onPageFinished(WebView view, String url) {
- 		        	//在page加载之后，加载核心JS，前端页面可以在document.ready函数中直接调用了；
- 		        	jsBridgeService.onWebPageFinished();
- 		        	//发送事件通知前端
- 		        	jsBridgeService.readyWithEventName("LDJSBridgeServiceReady");
- 		        }
+    			public void onPageStarted(WebView view, String url, Bitmap favicon){
+    				super.onPageStarted(view, url, favicon);
+    				//在page加载之后，加载核心JS，前端页面可以在document.ready函数中直接调用了；
+    				jsBridgeService.onWebPageFinished();
+    				isWebviewStarted = true;
+    			}
+
+    			public void onPageFinished(WebView view, String url) {
+    				super.onPageFinished(view, url);
+    		        	//发送事件通知前端
+    				if(isWebviewStarted){
+    		        		jsBridgeService.readyWithEventName("LDJSBridgeServiceReady");
+    		        		isWebviewStarted = false;
+    				}
+    			}
 
     			  @Override
     			  public boolean shouldOverrideUrlLoading(WebView view, String url) {
+    				  	if(url.startsWith("about:")){
+    				  		return true;
+    				  	}
     					if(url.startsWith(LDJSService.LDJSBridgeScheme)){
     						//处理JSBridge特定的Scheme
 							jsBridgeService.handleURLFromWebview(url);

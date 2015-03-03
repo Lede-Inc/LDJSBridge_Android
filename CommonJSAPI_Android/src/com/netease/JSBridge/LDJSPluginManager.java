@@ -365,40 +365,37 @@ public class LDJSPluginManager {
 	   * @param strFilePath
 	   * @return
 	   */
-	   private static String readTxtFile(String strFilePath){
-	        String path = strFilePath;
-	        String result = ""; //文件内容字符串
-            //打开文件
-            File file = new File(path);
-            //如果path是传递过来的参数，可以做一个非目录的判断
-            if (file.isDirectory())
-            {
-                Log.d("TestFile", "The File doesn't not exist.");
-            }
-            else
-            {
-            		long length = file.length();
-            		try{
-            			FileReader in = new FileReader(file);
-            		    char[] contents = new char[(int)length];
-            		    int numRead = in.read(contents);
-            		    if (numRead != length)
-            		    {
-            		    		Log.e("TestFile", "Incomplete read of " + strFilePath +
-            		                 ". Read chars " + numRead + " of " + length);
-            		    }
-            		    result = new String(contents, 0, numRead);
-            		    in.close();
-            		  }
-            		  catch (Exception ex){
-            			  Log.e("TestFile", "Failure reading " + strFilePath, ex);
-            			  result = "";
-            		  }
-            }
-            return result;
-
+	private static String readTxtFile(String strFilePath) {
+	    String path = strFilePath;
+	    StringBuilder content = new StringBuilder(); // 文件内容字符串
+	    // 打开文件
+	    File file = new File(path);
+	    // 如果path是传递过来的参数，可以做一个非目录的判断
+	    if (file.isDirectory()) {
+	      LDJSLOG.d("TestFile", "The File doesn't not exist.");
+	    } else {
+	      try {
+	        InputStream instream = new FileInputStream(file);
+	        if (instream != null) {
+	          InputStreamReader inputreader = new InputStreamReader(instream);
+	          BufferedReader buffreader = new BufferedReader(inputreader);
+	          char[] buffer = new char[2048];
+	          int length = -1;
+	          // 分行读取
+	          while ((length = buffreader.read(buffer)) > 0) {
+	            content.append(buffer, 0, length);
+	          }
+	          instream.close();
+	        }
+	      } catch (java.io.FileNotFoundException e) {
+	        LDJSLOG.d("TestFile", "The File doesn't not exist.");
+	      } catch (IOException e) {
+	        LDJSLOG.d("TestFile", e.getMessage());
+	      }
 	    }
+	    return content.toString();
 
+	  }
 
 
 	    /**

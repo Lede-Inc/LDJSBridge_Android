@@ -140,8 +140,6 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     		_webviewClient = new WebViewClient(){
     			public void onPageStarted(WebView view, String url, Bitmap favicon){
     				super.onPageStarted(view, url, favicon);
-    				//在page加载之后，加载核心JS，前端页面可以在document.ready函数中直接调用了；
-    				jsBridgeService.onWebPageFinished();
     				isWebviewStarted = true;
     			}
 
@@ -149,9 +147,11 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     				super.onPageFinished(view, url);
     		        	//发送事件通知前端
     				if(isWebviewStarted){
+    					//在page加载之后，加载核心JS，前端页面可以在document.ready函数中直接调用了；
+        				jsBridgeService.onWebPageFinished();
     		        		jsBridgeService.readyWithEventName("LDJSBridgeServiceReady");
-    		        		isWebviewStarted = false;
     				}
+    				isWebviewStarted = false;
     			}
 
     			  @Override

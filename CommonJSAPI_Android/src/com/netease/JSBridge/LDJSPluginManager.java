@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -103,7 +102,14 @@ public class LDJSPluginManager {
 			//设置插件完成之后，开启线程检查线上是否有更新
 			new Thread(new Runnable() {
 				public void run() {
-					//updateCodeBridgeJSCode();
+					try {
+						//更新的核心JS要下次才能用，所以可以稍微等待之后在更新
+						Thread.sleep(5 * 1000);
+						updateCodeBridgeJSCode();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}).start();
 		} catch (IOException e) {
@@ -316,29 +322,58 @@ public class LDJSPluginManager {
 	 */
 	public String localCoreBridgeJSCode(){
 		File cacheBridgeFile = new File(bridgeCacheDir(), coreBridgeJSFileName);
-// 		if(true){
-		if(!cacheBridgeFile.exists()){
-			try {
-				InputStream is;
-				is = context.getAssets().open(coreBridgeJSFileName);
-	            FileOutputStream fos = new FileOutputStream(new File(cacheBridgeFile.getPath()));
-	            byte[] buffer = new byte[2048];
-	            int byteCount=0;
-	            while((byteCount=is.read(buffer))!=-1) {//循环从输入流读取 buffer字节
-	                fos.write(buffer, 0, byteCount);//将读取的输入流写入到输出流
-	            }
-	            fos.flush();//刷新缓冲区
-	            is.close();
-	            fos.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		String jsBrideCodeStr = "";
+
+		//如果当前配置updateUrl，则从线上进行更新，不用每次从asset中进行拷贝；
+		if(this.updateUrl != null && this.updateUrl.length() > 0){
+			if(!cacheBridgeFile.exists()){
+				try {
+					InputStream is;
+					is = context.getAssets().open(coreBridgeJSFileName);
+		            FileOutputStream fos = new FileOutputStream(new File(cacheBridgeFile.getPath()));
+		            byte[] buffer = new byte[2048];
+		            int byteCount=0;
+		            while((byteCount=is.read(buffer))!=-1) {//循环从输入流读取 buffer字节
+		                fos.write(buffer, 0, byteCount);//将读取的输入流写入到输出流
+		            }
+		            fos.flush();//刷新缓冲区
+		            is.close();
+		            fos.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 			}
 
+
+		    jsBrideCodeStr = readTxtFile(bridgeCacheDir() + "/" + coreBridgeJSFileName);
 		}
 
+		//如果没有配置updateUrl，则直接从assets中进行读取
+		else {
+		  try {
+	        InputStream instream = context.getAssets().open(coreBridgeJSFileName);
+	        if (instream != null) {
+	        	  StringBuilder content = new StringBuilder(); // 文件内容字符串
+	          InputStreamReader inputreader = new InputStreamReader(instream);
+	          BufferedReader buffreader = new BufferedReader(inputreader);
+	          char[] buffer = new char[2048];
+	          int length = -1;
+	          // 分行读取
+	          while ((length = buffreader.read(buffer)) > 0) {
+	            content.append(buffer, 0, length);
+	          }
+	          jsBrideCodeStr = content.toString();
+	          instream.close();
+	        }
+	      } catch (java.io.FileNotFoundException e) {
+	        LDJSLOG.d("TestFile", "The File doesn't not exist.");
+	      } catch (IOException e) {
+	        LDJSLOG.d("TestFile", e.getMessage());
+	      }
+		}
 
-	    String jsBrideCodeStr = readTxtFile(bridgeCacheDir() + "/" + coreBridgeJSFileName);
 	    return jsBrideCodeStr;
 	}
 

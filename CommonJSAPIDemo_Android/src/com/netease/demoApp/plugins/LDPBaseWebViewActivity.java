@@ -149,7 +149,7 @@ public class LDPBaseWebViewActivity extends Activity implements LDJSActivityInte
     				if(isWebviewStarted){
     					//在page加载之后，加载核心JS，前端页面可以在document.ready函数中直接调用了；
         				jsBridgeService.onWebPageFinished();
-    		        		jsBridgeService.readyWithEventName("LDJSBridgeServiceReady");
+                        jsBridgeService.readyWithEventName("LDJSBridgeServiceReady");
     				}
     				isWebviewStarted = false;
     			}
